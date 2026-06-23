@@ -28,7 +28,8 @@
 
 - **Team:** GTSM (Global Technology Service Management) → **Markets** → **Equities**, supporting the **SRE** function.
 - **Discipline:** Site Reliability Engineering — kill **toil** (repetitive manual work) via automation. This is **RTB** (Run The Bank), **not BTB** (Build The Bank). It is **production reliability automation / synthetic monitoring**, *not* QA/testing.
-- **Project:** "Synthetic Health Check Automation for Trading Applications." Lead: **Pawan Kommuri**. Teammate: **Shashank Sathish**.
+- **Project:** "Synthetic Health Check Automation for Trading Applications." Lead: **Pawan Kommuri** (Director, Shared Services & IB Application Management, GTSM Markets Post Trade). Teammate: **Prem Choithani**.
+- **Equities reporting line:** I work with and report to **Vinit** (VP, Equities Markets GTSM RTB) for all equities/PDC work. **UiPath go-to / grad helper:** **Akshit Dutta** (SRE, Credit RTB Engineering, GTSM Markets India).
 - **Scope reality:** ~400+ manual checks across desks; mandate is "automate as much as you can." I own the **Equities / PDC** area.
 - **My edge:** finance literacy (DeFi/RWA — perps, options, structured products, OTC settlement, tx tracing/indexing). It lets me add a **correctness layer**: checking *meaning*, not just "is it up." E.g. I understand *why* a missing ACT-reporting log entry is a **regulatory** gap, not just a failed grep.
 
@@ -226,15 +227,17 @@ APPSERVER  APPSERVER_STATUS  LIST_ID   PDC_INS  KDB_STATUS  TRANS_ID  LOG_STATUS
 ## 9. Tooling split & POC environment
 
 - **Browser-based apps → Node.js + Playwright** (my comfort zone). Keep language scoped to browser scripts; the harness/glue may end up Python- or ksh-shaped (the checker world is ksh/KDB) — stay flexible. *(Note: my standing tooling preference is Python-first, Node only as fallback; here Playwright is via Node because that's the team's existing browser-automation stack — confirm.)*
-- **Desktop apps (PUMA GUI) → UiPath.** Unfamiliar → **highest learning priority.** Must confirm **PUMA is native desktop vs Citrix-streamed** (native = real selectors; Citrix = image/OCR).
-- **No PUMA access yet** → practice against a **dummy order-entry form** (HTML mirroring PUMA's fields + the Not Held popup) for both Playwright and UiPath.
+- **Desktop apps (PUMA GUI) → UiPath.** Unfamiliar → **highest learning priority.** **✅ RESOLVED (2026-06-23): PUMA is a NATIVE desktop thick client, NOT Citrix** → UiPath uses real **selectors** (the reliable path), not image/OCR. Evidence: "PUMA desktop application (non-prod)" is downloadable from **Software Center** (SCCM = local install; Citrix apps appear in Citrix Workspace/StoreFront, not Software Center) + endpoint middleware (TIBCO Rendezvous 8.7, GSL AppSynch) was provisioned to my machine (unnecessary if PUMA ran server-side). *Caveat:* native ≠ guaranteed clean selectors — once installed, run **UiPath UiExplorer** on the RIC/Quantity/Create fields + the "Not Held" popup to verify selector quality (some thick clients on old Java/Swing or custom grids still need anchors).
+- **A non-prod PUMA instance is available** (from Software Center) → safe place to inject test orders without touching production.
+- **Access approved:** Barclays PUMA 5.0, GPTS/PUMA (`A_TACGPTSPUMA_APAC_Level1`). (Note: "Cloud Software Group" owns both Citrix *and* TIBCO — the Rendezvous line is TIBCO RV messaging, not Citrix.)
+- **Practice target while access settles:** a **dummy order-entry form** (HTML mirroring PUMA's fields + the Not Held popup) for both Playwright and UiPath.
 - **POC sync:** work flows through this private GitHub repo (`tradfi`); Claude Code remote-control pushes to it; I run/adapt on the work PC (signed permission for AI-assisted POC). The timestamped repo log (`logs/worklog.md`) is the durable memory.
 
 ---
 
 ## 10. Open questions to confirm with the team
 
-1. Is **PUMA GUI native desktop or Citrix-streamed**? (Selector strategy hinges on this.)
+1. ~~Is **PUMA GUI native desktop or Citrix-streamed**?~~ **✅ RESOLVED 2026-06-23: NATIVE** (downloadable desktop app in Software Center; endpoint middleware provisioned). Selector-based strategy confirmed. Still TODO: verify selector *quality* via UiExplorer once installed.
 2. Is my target **just GUI injection**, or **full orchestration** (inject → trigger checker → Geneos)?
 3. Geneos: **enhance an existing PDC dataview or build new**? Fed via **Toolkit** script, **FKM**, or both? Who owns Netprobe/Gateway config (likely infra)?
 4. Confirm **bank policy on AI-assisted code** for this work (have signed POC permission; confirm scope).
