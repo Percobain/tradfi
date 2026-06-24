@@ -1,31 +1,24 @@
 // ─────────────────────────────────────────────────────────────────────────────
 //  OpenCalcAndAdd.cs — UiPath Coded Workflow (proof-of-path)
+//  Rewritten to match the sanctioned Studio TEMPLATE's API:
+//     var screen = uiAutomation.Open(Descriptors.MyApp.FirstScreen);
+//     screen.Click(Descriptors.MyApp.FirstScreen.SettingsButton);
+//  => target elements via the OBJECT REPOSITORY (Descriptors.*), NOT Target.FromSelector(...).
 //
-//  Purpose: prove the CODE-FIRST UiPath path works before touching PUMA.
-//  Flow: open Calculator -> click 999 + 999 = -> read display -> parse -> log -> assert.
-//  The final assert is a baby version of the tier-3 "financially coherent" check.
+//  ❗ THIS IS NOT PURE COPY-PASTE. The `Descriptors.*` references only resolve AFTER you
+//     capture the Calculator elements once in the Object Repository (UI Explorer). Do the
+//     5-step capture in README.md first, then this compiles and runs.
 //
-//  ──────────────────────────────────────────────────────────────────────────
-//  ❗ IF YOU GOT "Coded types may not be available in workflows due to errors":
-//     That is the Output rollup, not the real error. Open  View > Error List
-//     (or double-click a red line) to see the actual compiler message, then
-//     check these IN ORDER — most likely first:
+//  EASIEST INTEGRATION: keep the generated template file (its namespace + `class Workflow`
+//  + default usings), and copy ONLY the body of Execute() below into it, plus the three
+//  extra `using` lines (Globalization / RegularExpressions / System). That avoids any
+//  namespace/class/file-name mismatch — `Descriptors` resolves inside YOUR project either way.
 //
-//   (A) `uiAutomation` doesn't resolve  ->  the UI Automation package is NOT
-//       installed in THIS project. Fix: Manage Packages > install
-//       `UiPath.UIAutomation.Activities` (>= 23.10) > rebuild. (Most common cause
-//       when you paste this into a blank Process.) `system` works without it; the
-//       UI Automation service accessor only exists once that package is referenced.
-//
-//   (B) A method signature differs by version. The lines flagged "VERIFY" below are
-//       the usual suspects. Each has an ALTERNATIVE form commented next to it — if
-//       the primary shows a red squiggle, swap to the alternative (IntelliSense will
-//       confirm which overload your installed version exposes).
-//
-//   (C) Calculator is UWP (runs under ApplicationFrameHost.exe) so Open("calc.exe")
-//       may compile but fail to ATTACH at runtime. If so, capture the top-level
-//       window (title "Calculator") in UI Explorer and open/attach by that descriptor.
-//  ──────────────────────────────────────────────────────────────────────────
+//  NAMING CONTRACT (match these when you capture, or edit the code to your names):
+//     App     = Calculator
+//     Screen  = MainScreen
+//     Buttons = Nine, Plus, Equals
+//     Display = Display     (the results text element, AutomationId 'CalculatorResults')
 // ─────────────────────────────────────────────────────────────────────────────
 
 using System;
@@ -33,42 +26,35 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using UiPath.CodedWorkflows;
 using UiPath.Core;
-using UiPath.UIAutomationNext.API.Models;
-using UiPath.UIAutomationNext.Enums;
 
-namespace TradFi
+namespace TradFi   // <-- or keep YOUR generated project's namespace
 {
-    public class OpenCalcAndAdd : CodedWorkflow
+    public class OpenCalcAndAdd : CodedWorkflow   // <-- or keep the template's `Workflow`
     {
         [Workflow]
         public void Execute()
         {
-            // VERIFY (A): if `uiAutomation` is unresolved -> install UiPath.UIAutomation.Activities.
-            var calc = uiAutomation.Open("calc.exe");
+            // 1) Open/attach Calculator via its Object Repository SCREEN descriptor.
+            //    (The App descriptor you create holds the launch path, so this launches it.)
+            var calc = uiAutomation.Open(Descriptors.Calculator.MainScreen);
 
-            string[] sequence =
-            {
-                "num9Button", "num9Button", "num9Button",
-                "plusButton",
-                "num9Button", "num9Button", "num9Button",
-                "equalButton"
-            };
+            // 2) Click 9 9 9  +  9 9 9  =   via captured element descriptors.
+            calc.Click(Descriptors.Calculator.MainScreen.Nine);
+            calc.Click(Descriptors.Calculator.MainScreen.Nine);
+            calc.Click(Descriptors.Calculator.MainScreen.Nine);
+            calc.Click(Descriptors.Calculator.MainScreen.Plus);
+            calc.Click(Descriptors.Calculator.MainScreen.Nine);
+            calc.Click(Descriptors.Calculator.MainScreen.Nine);
+            calc.Click(Descriptors.Calculator.MainScreen.Nine);
+            calc.Click(Descriptors.Calculator.MainScreen.Equals);
 
-            // VERIFY (B): primary is the fluent app form `calc.Click(Target...)`.
-            // ALTERNATIVE (service form): uiAutomation.Click(Target.FromSelector($"<uia automationid='{automationId}' />"));
-            foreach (var automationId in sequence)
-                calc.Click(Target.FromSelector($"<uia automationid='{automationId}' />"));
+            // 3) Read the result display.
+            string displayText = calc.GetText(Descriptors.Calculator.MainScreen.Display);
 
-            // VERIFY (B): primary `calc.GetText(Target...)`.
-            // ALTERNATIVE (service form): uiAutomation.GetText(Target.FromSelector("<uia automationid='CalculatorResults' />"));
-            string displayText = calc.GetText(
-                Target.FromSelector("<uia automationid='CalculatorResults' />"));
-
+            // 4) Parse + assert — baby tier-3 "is the ANSWER correct?" check (not just "did it respond").
             string digitsOnly = Regex.Replace(displayText, "[^0-9]", "");
             int result = int.Parse(digitsOnly, CultureInfo.InvariantCulture);
 
-            // VERIFY (B): `Log(...)` is provided by the CodedWorkflow base class.
-            // ALTERNATIVE: system.LogMessage(displayText);  (or Log(LogLevel.Info, "..."))
             Log($"Raw display: {displayText}");
             Log($"Parsed result: {result}");
 
