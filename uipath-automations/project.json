@@ -1,0 +1,37 @@
+{
+  "name": "TradFi.UiPathAutomations",
+  "description": "PUMA PDC synthetic-monitoring coded workflows (PROOF-OF-PATH). TEMPLATE — adjust dependency/studio versions to the sanctioned Barclays GTSM Studio (>= 23.10); preferred route is to generate the project in Studio and paste the .cs body. See README.md.",
+  "main": "OpenCalcAndAdd.cs",
+  "dependencies": {
+    "UiPath.System.Activities": "[23.10.0]",
+    "UiPath.UIAutomation.Activities": "[23.10.0]"
+  },
+  "webServices": [],
+  "entitiesStores": [],
+  "schemaVersion": "4.0",
+  "studioVersion": "23.10.0.0",
+  "projectVersion": "1.0.0",
+  "runtimeOptions": {
+    "autoDispose": false,
+    "isPausable": true,
+    "isAttended": false,
+    "requiresUserInteraction": true,
+    "executionType": "Workflow"
+  },
+  "designOptions": {
+    "projectProfile": "Development",
+    "outputType": "Process",
+    "libraryOptions": {
+      "includeOriginalXaml": false,
+      "privateWorkflows": []
+    },
+    "processOptions": {
+      "ignoredFiles": []
+    },
+    "fileInfoCollection": []
+  },
+  "expressionLanguage": "CSharp",
+  "entryPoints": [],
+  "isTemplate": false,
+  "targetFramework": "Windows"
+}
