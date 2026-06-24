@@ -56,6 +56,21 @@ The Calculator AutomationIds used here (`num9Button`, `plusButton`, `equalButton
 
 ---
 
+## 🛠 Troubleshooting — "Coded types may not be available in workflows due to errors"
+
+That red line in the **Output** panel is only a **rollup**, not the real error. To see the actual cause: **View → Error List** (or double-click a red line). Then, in priority order:
+
+| # | Symptom (in Error List) | Cause | Fix |
+|---|---|---|---|
+| **A** | `uiAutomation` does not exist / is not resolved; cascade of "type not found" | The **UI Automation package isn't installed** in this project (common when pasting into a blank Process) | **Manage Packages → install `UiPath.UIAutomation.Activities` (≥ 23.10) → rebuild.** The `uiAutomation` service accessor only exists once that package is referenced. (`system` works without it.) |
+| **B** | `'NApplicationCard' does not contain a definition for 'Click'/'GetText'`, or `Target.FromSelector` overload not found | **Method surface differs by version** | Swap the flagged line to its **ALTERNATIVE (service form)** — each is commented inline in the `.cs`. Let IntelliSense confirm the overload. |
+| **C** | (compiles, but) fails at runtime to find/attach the app | **Calculator is UWP** (`ApplicationFrameHost.exe`); `Open("calc.exe")` may not attach | Capture the top-level window (title **"Calculator"**) in **UI Explorer**, open/attach by that descriptor. |
+| — | `No connection to Integration Service…` | benign | **Ignore** — not needed for local UI automation. |
+
+**Fastest way to send me the real error:** double-click the first red entry in the Error List and paste its exact text (e.g. `CS0103: The name 'uiAutomation' does not exist...`). The `CSxxxx` code + message tells me precisely which line/overload to fix.
+
+> Note: the API surface is version-specific, so the exact method overloads depend on your sanctioned Studio/package versions. The inline ALTERNATIVE forms cover the common variations; the Error List text lets me pin the exact one.
+
 ## Next step (proposed)
 
 Extend this into the **three-tier scaffold** — *reachable → responding correctly → financially coherent* — with each layer stubbed and the **Geneos output hook** wired in, same Coded Workflow structure. Then port the pattern to the real PUMA injection (config-driven, 6 PDC instances).

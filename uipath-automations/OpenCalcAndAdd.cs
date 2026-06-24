@@ -3,25 +3,29 @@
 //
 //  Purpose: prove the CODE-FIRST UiPath path works before touching PUMA.
 //  Flow: open Calculator -> click 999 + 999 = -> read display -> parse -> log -> assert.
-//  The final assert is a baby version of the tier-3 "financially coherent" check
-//  (we don't just confirm the app responded — we confirm the *answer* is correct).
+//  The final assert is a baby version of the tier-3 "financially coherent" check.
 //
-//  PREREQUISITES (see README.md):
-//   - UiPath Studio >= 23.10 (Coded Workflows need System.Activities + UIAutomation.Activities >= 23.10).
-//     ❗ OPEN QUESTION: confirm the sanctioned Studio version with Pawan. If it's < 23.10,
-//        this path is closed and we fall back to the drag-and-drop canvas.
-//   - Add this file to a UiPath project as a Coded Workflow (right-click > New > Coded Workflow),
-//     or paste its body into a generated coded-workflow file so the SDK references resolve.
+//  ──────────────────────────────────────────────────────────────────────────
+//  ❗ IF YOU GOT "Coded types may not be available in workflows due to errors":
+//     That is the Output rollup, not the real error. Open  View > Error List
+//     (or double-click a red line) to see the actual compiler message, then
+//     check these IN ORDER — most likely first:
 //
-//  VERIFY AGAINST INTELLISENSE (the UI Automation method surface shifts between versions —
-//  these are the lines most likely to need a tweak on the work PC):
-//   1. uiAutomation.Open(...) signature/return type.
-//   2. Whether Click/GetText take Target.FromSelector("<uia .../>") or a captured descriptor.
-//   3. The log helper: Log(...) here vs system.LogMessage(...) in some versions.
+//   (A) `uiAutomation` doesn't resolve  ->  the UI Automation package is NOT
+//       installed in THIS project. Fix: Manage Packages > install
+//       `UiPath.UIAutomation.Activities` (>= 23.10) > rebuild. (Most common cause
+//       when you paste this into a blank Process.) `system` works without it; the
+//       UI Automation service accessor only exists once that package is referenced.
 //
-//  CALCULATOR NOTE: Windows Calculator is UWP (runs under ApplicationFrameHost.exe), so
-//  Open("calc.exe") may not attach cleanly. If it doesn't, capture the top-level window
-//  (window title "Calculator") in UI Explorer and open/attach by that descriptor instead.
+//   (B) A method signature differs by version. The lines flagged "VERIFY" below are
+//       the usual suspects. Each has an ALTERNATIVE form commented next to it — if
+//       the primary shows a red squiggle, swap to the alternative (IntelliSense will
+//       confirm which overload your installed version exposes).
+//
+//   (C) Calculator is UWP (runs under ApplicationFrameHost.exe) so Open("calc.exe")
+//       may compile but fail to ATTACH at runtime. If so, capture the top-level
+//       window (title "Calculator") in UI Explorer and open/attach by that descriptor.
+//  ──────────────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────
 
 using System;
@@ -39,6 +43,7 @@ namespace TradFi
         [Workflow]
         public void Execute()
         {
+            // VERIFY (A): if `uiAutomation` is unresolved -> install UiPath.UIAutomation.Activities.
             var calc = uiAutomation.Open("calc.exe");
 
             string[] sequence =
@@ -49,15 +54,21 @@ namespace TradFi
                 "equalButton"
             };
 
+            // VERIFY (B): primary is the fluent app form `calc.Click(Target...)`.
+            // ALTERNATIVE (service form): uiAutomation.Click(Target.FromSelector($"<uia automationid='{automationId}' />"));
             foreach (var automationId in sequence)
                 calc.Click(Target.FromSelector($"<uia automationid='{automationId}' />"));
 
+            // VERIFY (B): primary `calc.GetText(Target...)`.
+            // ALTERNATIVE (service form): uiAutomation.GetText(Target.FromSelector("<uia automationid='CalculatorResults' />"));
             string displayText = calc.GetText(
                 Target.FromSelector("<uia automationid='CalculatorResults' />"));
 
             string digitsOnly = Regex.Replace(displayText, "[^0-9]", "");
             int result = int.Parse(digitsOnly, CultureInfo.InvariantCulture);
 
+            // VERIFY (B): `Log(...)` is provided by the CodedWorkflow base class.
+            // ALTERNATIVE: system.LogMessage(displayText);  (or Log(LogLevel.Info, "..."))
             Log($"Raw display: {displayText}");
             Log($"Parsed result: {result}");
 
